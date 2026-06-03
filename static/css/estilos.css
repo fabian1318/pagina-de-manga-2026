@@ -1,0 +1,41 @@
+/* static/css/estilos.css */
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f4f4f9;
+    margin: 0;
+    padding: 20px;
+}
+
+.catalogo-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.tarjeta-manga {
+    background: white;
+    border-radius: 8px;
+    padding: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    text-align: center;
+}
+
+.tarjeta-manga img {
+    max-width: 100%;
+    height: 280px;
+    object-fit: cover;
+    border-radius: 4px;
+}
+
+.tarjeta-manga h3 {
+    font-size: 1.1rem;
+    color: #333;
+    margin: 10px 0 5px 0;
+}
+
+.tarjeta-manga p {
+    color: #666;
+    font-size: 0.9rem;
+    margin: 5px 0;
+}
