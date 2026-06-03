@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Inicio - Manga Reader</title>
+</head>
+<body>
+    <h1>Bienvenido a tu Biblioteca de Manga</h1>
+    
+    {% if user.is_authenticated %}
+        <p>¡Hola, {{ user.username }}! Has iniciado sesión con éxito.</p>
+        <form action="{% url 'logout' %}" method="post">
+            {% csrf_token %}
+            <button type="submit">Cerrar Sesión</button>
+        </form>
+    {% else %}
+        <p>No has iniciado sesión.</p>
+        <a href="{% url 'login' %}">Ir al Login</a>
+    {% endif %}
+</body>
+</html>

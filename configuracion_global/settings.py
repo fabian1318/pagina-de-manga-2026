@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/6.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/6.0/ref/settings/
 """
-
+import os
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -37,6 +37,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
+    # Apps locales
+    'usuarios',
+    'biblioteca',
 ]
 
 MIDDLEWARE = [
@@ -114,4 +118,19 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
+# --- ARCHIVOS ESTÁTICOS (CSS, JS, Imágenes de diseño) ---
 STATIC_URL = 'static/'
+
+# Le decimos a Django que busque una carpeta 'static' en la raíz del proyecto
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),
+]
+# --- ARCHIVOS MULTIMEDIA (Portadas y páginas de Manga subidas por ti) ---
+MEDIA_URL = 'media/'
+# Le decimos a Django dónde guardar físicamente las imágenes subidas
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+
+AUTH_USER_MODEL = 'usuarios.Usuario'
+# Por ahora los mandaremos al index global, más adelante crearemos la ruta 'home'
+LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
