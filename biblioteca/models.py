@@ -43,3 +43,25 @@ class Manga(models.Model):
 
     def __str__(self):
         return self.titulo
+    
+class Capitulo(models.Model):
+    # Relacionamos el capítulo con su manga. CASCADE significa que si borras el manga, se borran sus capítulos.
+    manga = models.ForeignKey(Manga, on_delete=models.CASCADE, related_name='capitulos')
+    
+    # Usamos DecimalField por si hay capítulos extra como el "10.5"
+    numero = models.DecimalField(max_digits=5, decimal_places=1)
+    
+    # El título del capítulo es opcional (blank=True, null=True) porque a veces solo tienen número
+    titulo = models.CharField(max_length=200, blank=True, null=True)
+    fecha_subida = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Capítulo"
+        verbose_name_plural = "Capítulos"
+        # Ordenamos por defecto del capítulo más nuevo al más viejo
+        ordering = ['-numero']
+
+    def __str__(self):
+        if self.titulo:
+            return f"{self.manga.titulo} - Cap. {self.numero}: {self.titulo}"
+        return f"{self.manga.titulo} - Cap. {self.numero}"

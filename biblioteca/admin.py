@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Manga, Genero
+from .models import Manga, Genero, Capitulo
 
 @admin.register(Genero)
 class GeneroAdmin(admin.ModelAdmin):
@@ -11,3 +11,8 @@ class MangaAdmin(admin.ModelAdmin):
     list_display = ('titulo', 'autor', 'estado', 'calificacion', 'fecha_agregado')
     list_filter = ('estado', 'generos')
     search_fields = ('titulo', 'autor')
+
+@admin.register(Capitulo)
+class CapituloAdmin(admin.ModelAdmin):
+    list_display = ('manga', 'numero', 'titulo', 'fecha_subida')
+    list_filter = ('manga',)
