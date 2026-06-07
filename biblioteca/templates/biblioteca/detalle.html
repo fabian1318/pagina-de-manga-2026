@@ -1,0 +1,62 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ manga.titulo }} - Manga Reader</title>
+    <link rel="stylesheet" href="{% static 'css/detalle.css' %}">
+</head>
+<body>
+
+    <nav class="nav-principal">
+        <a href="{% url 'inicio' %}">← Volver a la Biblioteca</a>
+    </nav>
+
+    <main class="contenedor-detalle">
+        
+        <aside class="columna-portada">
+            {% if manga.portada %}
+                <img src="{{ manga.portada.url }}" alt="Portada de {{ manga.titulo }}">
+            {% endif %}
+        </aside>
+
+        <section class="columna-info">
+            <h1>{{ manga.titulo }}</h1>
+            
+            <p><strong>Autor:</strong> {{ manga.autor }} | <strong>Estado:</strong> {{ manga.get_estado_display }} | <strong>⭐</strong> {{ manga.calificacion }}</p>
+            
+            <div>
+                {% for genero in manga.generos.all %}
+                    <span class="etiqueta-genero">{{ genero.nombre }}</span>
+                {% empty %}
+                    <span class="etiqueta-genero">Sin género</span>
+                {% endfor %}
+            </div>
+
+            <div class="sinopsis">
+                {{ manga.sinopsis|linebreaks }}
+            </div>
+
+            <div class="lista-capitulos">
+                <h3>Capítulos Disponibles</h3>
+                
+                {% for capitulo in capitulos %}
+                    <a href="{% url 'leer_capitulo' capitulo.id %}" class="capitulo-link">
+                        {% if capitulo.tomo %}Tomo {{ capitulo.tomo }} - {% endif %}
+                        Capítulo {{ capitulo.numero }}
+                        {% if capitulo.titulo %}: {{ capitulo.titulo }}{% endif %}
+                        <span style="float: right; color: #6a737d; font-size: 0.85rem;">
+                            Subido el {{ capitulo.fecha_subida|date:"d M Y" }}
+                        </span>
+                    </a>
+                {% empty %}
+                    <p>Aún no hay capítulos disponibles para este manga.</p>
+                {% endfor %}
+            </div>
+
+        </section>
+    </main>
+
+</body>
+</html>

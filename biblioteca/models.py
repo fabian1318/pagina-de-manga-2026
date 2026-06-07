@@ -45,23 +45,52 @@ class Manga(models.Model):
         return self.titulo
     
 class Capitulo(models.Model):
-    # Relacionamos el capítulo con su manga. CASCADE significa que si borras el manga, se borran sus capítulos.
     manga = models.ForeignKey(Manga, on_delete=models.CASCADE, related_name='capitulos')
     
-    # Usamos DecimalField por si hay capítulos extra como el "10.5"
-    numero = models.DecimalField(max_digits=5, decimal_places=1)
+    # NUEVO: Campo de Tomo (Volumen). Puede estar vacío (blank=True, null=True)
+    tomo = models.DecimalField(
+        max_digits=5, 
+        decimal_places=1, 
+        blank=True, 
+        null=True, 
+        help_text="Déjalo en blanco si es un capítulo semanal sin tomo oficial."
+    )
     
-    # El título del capítulo es opcional (blank=True, null=True) porque a veces solo tienen número
+    numero = models.DecimalField(max_digits=5, decimal_places=1)
     titulo = models.CharField(max_length=200, blank=True, null=True)
     fecha_subida = models.DateTimeField(auto_now_add=True)
 
     class Meta:
         verbose_name = "Capítulo"
         verbose_name_plural = "Capítulos"
-        # Ordenamos por defecto del capítulo más nuevo al más viejo
-        ordering = ['-numero']
+        # Ordenamos primero por tomo (los sueltos al final) y luego por capítulo
+        ordering = ['tomo', '-numero']
 
     def __str__(self):
+        # Un texto dinámico para que el panel de administración se vea ordenado
+        texto = f"{self.manga.titulo} - "
+        if self.tomo:
+            texto += f"Tomo {self.tomo} | "
+        texto += f"Cap. {self.numero}"
         if self.titulo:
-            return f"{self.manga.titulo} - Cap. {self.numero}: {self.titulo}"
-        return f"{self.manga.titulo} - Cap. {self.numero}"
+            texto += f": {self.titulo}"
+        return texto
+    
+class Pagina(models.Model):
+    # Relacionamos cada página con su capítulo
+    capitulo = models.ForeignKey(Capitulo, on_delete=models.CASCADE, related_name='paginas')
+    
+    # El número de la página (1, 2, 3...) para que se lean en orden
+    numero = models.PositiveIntegerField()
+    
+    # Aquí se guardará la imagen real de la página
+    imagen = models.ImageField(upload_to='mangas/paginas/')
+
+    class Meta:
+        verbose_name = "Página"
+        verbose_name_plural = "Páginas"
+        # Es CRÍTICO que se ordenen por número, sino el manga se leerá desordenado
+        ordering = ['numero']
+
+    def __str__(self):
+        return f"Página {self.numero} - {self.capitulo}"

@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Manga, Genero, Capitulo
+from .models import Manga, Genero, Capitulo, Pagina
 
 @admin.register(Genero)
 class GeneroAdmin(admin.ModelAdmin):
@@ -14,5 +14,12 @@ class MangaAdmin(admin.ModelAdmin):
 
 @admin.register(Capitulo)
 class CapituloAdmin(admin.ModelAdmin):
-    list_display = ('manga', 'numero', 'titulo', 'fecha_subida')
-    list_filter = ('manga',)
+    # Añadimos 'tomo' a la vista
+    list_display = ('manga', 'tomo', 'numero', 'titulo', 'fecha_subida')
+    list_filter = ('manga', 'tomo')
+
+@admin.register(Pagina)
+class PaginaAdmin(admin.ModelAdmin):
+    list_display = ('capitulo', 'numero')
+    list_filter = ('capitulo__manga', 'capitulo')
+    

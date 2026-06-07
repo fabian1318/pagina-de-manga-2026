@@ -25,11 +25,12 @@
     <main class="catalogo-grid">
         {% for manga in mangas %}
             <article class="tarjeta-manga">
-                {% if manga.portada %}
-                    <img src="{{ manga.portada.url }}" alt="Portada de {{ manga.titulo }}">
-                {% endif %}
-                
-                <h3>{{ manga.titulo }}</h3>
+                <a href="{% url 'detalle_manga' manga.id %}" style="text-decoration: none; color: inherit;">
+                    {% if manga.portada %}
+                        <img src="{{ manga.portada.url }}" alt="Portada de {{ manga.titulo }}">
+                    {% endif %}
+                    <h3>{{ manga.titulo }}</h3>
+                </a>
                 <p>Autor: {{ manga.autor }}</p>
                 <p>⭐ {{ manga.calificacion }} / 5.00</p>
             </article>
