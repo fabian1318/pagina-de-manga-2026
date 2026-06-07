@@ -40,7 +40,19 @@
 
             <div class="lista-capitulos">
                 <h3>Capítulos Disponibles</h3>
+                <div class="lista-capitulos">
+                <h3>Capítulos Disponibles</h3>
                 
+                {% if progreso %}
+                    <div style="background-color: #e8f0fe; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #0366d6;">
+                        <p style="margin: 0; color: #0366d6; font-weight: bold;">
+                            Continuar leyendo: 
+                            <a href="{% url 'leer_capitulo' progreso.capitulo.id %}" style="color: #0366d6; text-decoration: underline;">
+                                Cap. {{ progreso.capitulo.numero }}
+                            </a>
+                        </p>
+                    </div>
+                {% endif %}
                 {% for capitulo in capitulos %}
                     <a href="{% url 'leer_capitulo' capitulo.id %}" class="capitulo-link">
                         {% if capitulo.tomo %}Tomo {{ capitulo.tomo }} - {% endif %}

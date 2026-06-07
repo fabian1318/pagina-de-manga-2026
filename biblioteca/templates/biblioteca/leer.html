@@ -10,24 +10,79 @@
 <body>
 
     <nav class="lector-nav">
-        <a href="{% url 'detalle_manga' capitulo.manga.id %}">← Volver al Manga</a>
-        
-        <h1>
-            {{ capitulo.manga.titulo }} - 
-            {% if capitulo.tomo %}Tomo {{ capitulo.tomo }} | {% endif %}
-            Cap. {{ capitulo.numero }}
-        </h1>
-        
+        <a href="{% url 'detalle_manga' capitulo.manga.id %}">← Volver</a>
+        <h1>{{ capitulo.manga.titulo }} - Cap. {{ capitulo.numero }}</h1>
         <a href="{% url 'inicio' %}">🏠 Inicio</a>
     </nav>
 
+    <input type="hidden" id="csrfToken" value="{{ csrf_token }}">
+    <input type="hidden" id="capituloId" value="{{ capitulo.id }}">
+    <input type="hidden" id="urlGuardar" value="{% url 'guardar_progreso' %}">
+
     <main class="contenedor-paginas">
         {% for pagina in paginas %}
-            <img src="{{ pagina.imagen.url }}" alt="Página {{ pagina.numero }}" loading="lazy">
+            <img src="{{ pagina.imagen.url }}" 
+                 alt="Página {{ pagina.numero }}" 
+                 id="pagina-{{ pagina.numero }}" 
+                 data-numero="{{ pagina.numero }}" 
+                 class="pagina-manga" 
+                 loading="lazy">
         {% empty %}
-            <p style="color: white; margin-top: 50px;">Aún no hay páginas subidas para este capítulo.</p>
+            <p style="color: white; margin-top: 50px;">Aún no hay páginas.</p>
         {% endfor %}
     </main>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const paginaGuardada = {{ pagina_guardada }};
+            
+            // 1. AUTO-SCROLL: Si hay una página guardada distinta de 1, bajamos hacia ella
+            if (paginaGuardada > 1) {
+                const imagenObjetivo = document.getElementById(`pagina-${paginaGuardada}`);
+                if (imagenObjetivo) {
+                    imagenObjetivo.scrollIntoView({ behavior: 'smooth' });
+                }
+            }
+
+            // 2. DETECTOR DE PÁGINAS VISIBLES
+            const urlGuardar = document.getElementById("urlGuardar").value;
+            const csrfToken = document.getElementById("csrfToken").value;
+            const capituloId = document.getElementById("capituloId").value;
+            
+            // Configuramos el "vigilante"
+            const opciones = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.5 // La imagen debe estar al menos 50% visible en pantalla
+            };
+
+            const observador = new IntersectionObserver((entradas) => {
+                entradas.forEach(entrada => {
+                    // Si la imagen entra en la pantalla
+                    if (entrada.isIntersecting) {
+                        const numPagina = entrada.target.getAttribute('data-numero');
+                        
+                        // Enviamos el dato a Django en secreto
+                        fetch(urlGuardar, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': csrfToken
+                            },
+                            body: JSON.stringify({
+                                'capitulo_id': capituloId,
+                                'pagina': numPagina
+                            })
+                        });
+                    }
+                });
+            }, opciones);
+
+            // Le decimos al vigilante que observe todas las imágenes
+            const imagenes = document.querySelectorAll('.pagina-manga');
+            imagenes.forEach(img => observador.observe(img));
+        });
+    </script>
 
 </body>
 </html>

@@ -22,6 +22,29 @@
         {% endif %}
     </header>
 
+    <section class="seccion-buscador">
+        <form method="GET" action="{% url 'inicio' %}" class="formulario-busqueda">
+            
+            <input type="text" name="q" placeholder="Buscar por título o autor..." value="{{ query_actual }}">
+            
+            <select name="genero">
+                <option value="">Todos los géneros</option>
+                {% for genero in generos %}
+                    <option value="{{ genero.id }}" {% if genero.id == genero_actual %}selected{% endif %}>
+                        {{ genero.nombre }}
+                    </option>
+                {% endfor %}
+            </select>
+            
+            <button type="submit" class="btn-buscar">Buscar</button>
+            
+            {% if query_actual or genero_actual %}
+                <a href="{% url 'inicio' %}" class="btn-limpiar">Limpiar filtros</a>
+            {% endif %}
+            
+        </form>
+    </section>
+
     <main class="catalogo-grid">
         {% for manga in mangas %}
             <article class="tarjeta-manga">

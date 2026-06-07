@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 from django.core.validators import MinValueValidator, MaxValueValidator
 
@@ -94,3 +95,23 @@ class Pagina(models.Model):
 
     def __str__(self):
         return f"Página {self.numero} - {self.capitulo}"
+    
+class HistorialLectura(models.Model):
+    # Conecta al usuario que está leyendo
+    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='historial')
+    # Conecta al manga que está leyendo
+    manga = models.ForeignKey(Manga, on_delete=models.CASCADE)
+    # Guarda el último capítulo que abrió
+    capitulo = models.ForeignKey(Capitulo, on_delete=models.CASCADE)
+    # Guarda la ultima página que leyó dentro de ese capítulo
+    pagina_actual = models.PositiveIntegerField(default=1)
+    # Guarda la fecha y hora exacta en que lo leyó
+    fecha_lectura = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        # Esto asegura que solo haya UN registro de progreso por usuario y por manga
+        unique_together = ('usuario', 'manga')
+
+    def __str__(self):
+        return f"{self.usuario.username} - {self.manga.titulo} - Cap {self.capitulo.numero}"
+    
