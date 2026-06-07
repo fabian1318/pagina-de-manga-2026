@@ -1,25 +1,47 @@
-{% load static %}
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Leyendo: {{ capitulo }}</title>
-    <link rel="stylesheet" href="{% static 'css/lector.css' %}">
-</head>
-<body>
+{% extends 'biblioteca/base.html' %}
 
-    <nav class="lector-nav">
-        <a href="{% url 'detalle_manga' capitulo.manga.id %}">← Volver</a>
-        <h1>{{ capitulo.manga.titulo }} - Cap. {{ capitulo.numero }}</h1>
-        <a href="{% url 'inicio' %}">🏠 Inicio</a>
-    </nav>
+{% block title %}Leyendo: {{ capitulo.manga.titulo }} - Cap. {{ capitulo.numero }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .contenedor-paginas {
+        max-width: 900px; /* Evita que las imágenes se vean gigantes en monitores PC */
+        margin: 0 auto;
+        background-color: #000; /* Fondo negro puro para inmersión total */
+    }
+    .pagina-manga {
+        width: 100%;
+        height: auto;
+        display: block; /* Quita los molestos espacios en blanco entre imágenes */
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center bg-dark border border-secondary p-3 rounded mb-4 shadow-sm">
+        
+        <a href="{% url 'detalle_manga' capitulo.manga.id %}" class="btn btn-outline-secondary btn-sm mb-2 mb-md-0">
+            &larr; Volver a Detalles
+        </a>
+
+        <h4 class="text-light m-0 text-center fs-5 fw-bold">
+            {{ capitulo.manga.titulo }}
+            <span class="text-primary mx-2">|</span>
+            {% if capitulo.tomo %}Tomo {{ capitulo.tomo }} - {% endif %}Capítulo {{ capitulo.numero }}
+        </h4>
+
+        <a href="#top" class="btn btn-outline-primary btn-sm mt-2 mt-md-0" onclick="window.scrollTo(0,0);">
+            Subir &uarr;
+        </a>
+        
+    </div>
 
     <input type="hidden" id="csrfToken" value="{{ csrf_token }}">
     <input type="hidden" id="capituloId" value="{{ capitulo.id }}">
     <input type="hidden" id="urlGuardar" value="{% url 'guardar_progreso' %}">
 
-    <main class="contenedor-paginas">
+    <div class="contenedor-paginas shadow-lg rounded overflow-hidden">
         {% for pagina in paginas %}
             <img src="{{ pagina.imagen.url }}" 
                  alt="Página {{ pagina.numero }}" 
@@ -28,61 +50,61 @@
                  class="pagina-manga" 
                  loading="lazy">
         {% empty %}
-            <p style="color: white; margin-top: 50px;">Aún no hay páginas.</p>
+            <div class="p-5 text-center text-muted bg-dark">
+                <h5>Aún no hay páginas disponibles para este capítulo.</h5>
+            </div>
         {% endfor %}
-    </main>
+    </div>
 
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            const paginaGuardada = {{ pagina_guardada }};
-            
-            // 1. AUTO-SCROLL: Si hay una página guardada distinta de 1, bajamos hacia ella
-            if (paginaGuardada > 1) {
-                const imagenObjetivo = document.getElementById(`pagina-${paginaGuardada}`);
-                if (imagenObjetivo) {
-                    imagenObjetivo.scrollIntoView({ behavior: 'smooth' });
-                }
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        // Disfrazamos la variable para que VS Code no marque error
+        const paginaGuardada = parseInt("{{ pagina_guardada|default:'1' }}", 10);
+        
+        // AUTO-SCROLL
+        if (paginaGuardada > 1) {
+            const imagenObjetivo = document.getElementById(`pagina-${paginaGuardada}`);
+            if (imagenObjetivo) {
+                imagenObjetivo.scrollIntoView({ behavior: 'smooth' });
             }
+        }
 
-            // 2. DETECTOR DE PÁGINAS VISIBLES
-            const urlGuardar = document.getElementById("urlGuardar").value;
-            const csrfToken = document.getElementById("csrfToken").value;
-            const capituloId = document.getElementById("capituloId").value;
-            
-            // Configuramos el "vigilante"
-            const opciones = {
-                root: null,
-                rootMargin: '0px',
-                threshold: 0.5 // La imagen debe estar al menos 50% visible en pantalla
-            };
+        // DETECTOR DE PROGRESO
+        const urlGuardar = document.getElementById("urlGuardar").value;
+        const csrfToken = document.getElementById("csrfToken").value;
+        const capituloId = document.getElementById("capituloId").value;
+        
+        const opciones = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.5 
+        };
 
-            const observador = new IntersectionObserver((entradas) => {
-                entradas.forEach(entrada => {
-                    // Si la imagen entra en la pantalla
-                    if (entrada.isIntersecting) {
-                        const numPagina = entrada.target.getAttribute('data-numero');
-                        
-                        // Enviamos el dato a Django en secreto
-                        fetch(urlGuardar, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json',
-                                'X-CSRFToken': csrfToken
-                            },
-                            body: JSON.stringify({
-                                'capitulo_id': capituloId,
-                                'pagina': numPagina
-                            })
-                        });
-                    }
-                });
-            }, opciones);
+        const observador = new IntersectionObserver((entradas) => {
+            entradas.forEach(entrada => {
+                if (entrada.isIntersecting) {
+                    const numPagina = entrada.target.getAttribute('data-numero');
+                    
+                    fetch(urlGuardar, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrfToken
+                        },
+                        body: JSON.stringify({
+                            'capitulo_id': capituloId,
+                            'pagina': numPagina
+                        })
+                    });
+                }
+            });
+        }, opciones);
 
-            // Le decimos al vigilante que observe todas las imágenes
-            const imagenes = document.querySelectorAll('.pagina-manga');
-            imagenes.forEach(img => observador.observe(img));
-        });
-    </script>
-
-</body>
-</html>
+        const imagenes = document.querySelectorAll('.pagina-manga');
+        imagenes.forEach(img => observador.observe(img));
+    });
+</script>
+{% endblock %}

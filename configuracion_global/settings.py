@@ -41,6 +41,9 @@ INSTALLED_APPS = [
     # Apps locales
     'usuarios',
     'biblioteca',
+
+    # Herramientas de terceros (SIEMPRE AL FINAL)
+    'django_cleanup.apps.CleanupConfig',
 ]
 
 MIDDLEWARE = [
