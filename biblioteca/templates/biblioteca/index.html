@@ -1,33 +1,19 @@
-{% load static %} 
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <title>Inicio - Manga Reader</title>
-    <link rel="stylesheet" href="{% static 'css/estilos.css' %}">
-</head>
-<body>
-    
-    <header>
-        <h1>Mi Biblioteca de Manga</h1>
-        {% if user.is_authenticated %}
-            <p>Bienvenido, {{ user.username }} | 
-               <form action="{% url 'logout' %}" method="post" style="display:inline;">
-                   {% csrf_token %}
-                   <button type="submit">Cerrar Sesión</button>
-               </form>
-            </p>
-        {% else %}
-            <a href="{% url 'login' %}">Iniciar Sesión</a>
-        {% endif %}
-    </header>
+{% extends 'biblioteca/base.html' %}
+{% load static %}
 
-    <section class="seccion-buscador">
-        <form method="GET" action="{% url 'inicio' %}" class="formulario-busqueda">
+{% block title %}Inicio - Biblioteca{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/estilos.css' %}">
+{% endblock %}
+
+{% block content %}
+    
+    <section class="seccion-buscador bg-secondary p-3 rounded mb-4">
+        <form method="GET" action="{% url 'inicio' %}" class="d-flex gap-2">
+            <input type="text" name="q" class="form-control bg-dark text-light border-secondary" placeholder="Buscar por título o autor..." value="{{ query_actual }}">
             
-            <input type="text" name="q" placeholder="Buscar por título o autor..." value="{{ query_actual }}">
-            
-            <select name="genero">
+            <select name="genero" class="form-select bg-dark text-light border-secondary w-auto">
                 <option value="">Todos los géneros</option>
                 {% for genero in generos %}
                     <option value="{{ genero.id }}" {% if genero.id == genero_actual %}selected{% endif %}>
@@ -36,31 +22,29 @@
                 {% endfor %}
             </select>
             
-            <button type="submit" class="btn-buscar">Buscar</button>
+            <button type="submit" class="btn btn-primary">Buscar</button>
             
             {% if query_actual or genero_actual %}
-                <a href="{% url 'inicio' %}" class="btn-limpiar">Limpiar filtros</a>
+                <a href="{% url 'inicio' %}" class="btn btn-outline-danger">Limpiar</a>
             {% endif %}
-            
         </form>
     </section>
 
-    <main class="catalogo-grid">
+    <div class="catalogo-grid">
         {% for manga in mangas %}
-            <article class="tarjeta-manga">
-                <a href="{% url 'detalle_manga' manga.id %}" style="text-decoration: none; color: inherit;">
+            <article class="tarjeta-manga bg-dark border border-secondary">
+                <a href="{% url 'detalle_manga' manga.id %}" class="text-decoration-none">
                     {% if manga.portada %}
-                        <img src="{{ manga.portada.url }}" alt="Portada de {{ manga.titulo }}">
+                        <img src="{{ manga.portada.url }}" alt="Portada" class="img-fluid rounded">
                     {% endif %}
-                    <h3>{{ manga.titulo }}</h3>
+                    <h3 class="text-light mt-2">{{ manga.titulo }}</h3>
                 </a>
-                <p>Autor: {{ manga.autor }}</p>
-                <p>⭐ {{ manga.calificacion }} / 5.00</p>
+                <p class="text-secondary mb-1">Autor: {{ manga.autor }}</p>
+                <p class="text-warning">⭐ {{ manga.calificacion }}</p>
             </article>
         {% empty %}
-            <p>Aún no hay mangas registrados en la biblioteca.</p>
+            <p class="text-center text-secondary w-100 mt-5">Aún no hay mangas registrados.</p>
         {% endfor %}
-    </main>
+    </div>
 
-</body>
-</html>
+{% endblock %}

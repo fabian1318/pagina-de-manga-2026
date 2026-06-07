@@ -1,74 +1,88 @@
+{% extends 'biblioteca/base.html' %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="es">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{{ manga.titulo }} - Manga Reader</title>
-    <link rel="stylesheet" href="{% static 'css/detalle.css' %}">
-</head>
-<body>
 
-    <nav class="nav-principal">
-        <a href="{% url 'inicio' %}">← Volver a la Biblioteca</a>
-    </nav>
+{% block title %}{{ manga.titulo }} - Detalles{% endblock %}
 
-    <main class="contenedor-detalle">
+{% block content %}
+
+    <div class="mb-4">
+        <a href="{% url 'inicio' %}" class="btn btn-outline-secondary btn-sm">
+            &larr; Volver a la Biblioteca
+        </a>
+    </div>
+
+    <div class="row">
         
-        <aside class="columna-portada">
+        <div class="col-md-4 col-lg-3 text-center mb-4">
             {% if manga.portada %}
-                <img src="{{ manga.portada.url }}" alt="Portada de {{ manga.titulo }}">
+                <img src="{{ manga.portada.url }}" alt="Portada de {{ manga.titulo }}" class="img-fluid rounded shadow-lg border border-secondary">
+            {% else %}
+                <div class="bg-secondary text-white rounded d-flex align-items-center justify-content-center" style="height: 350px;">
+                    Sin portada
+                </div>
             {% endif %}
-        </aside>
+        </div>
 
-        <section class="columna-info">
-            <h1>{{ manga.titulo }}</h1>
+        <div class="col-md-8 col-lg-9">
             
-            <p><strong>Autor:</strong> {{ manga.autor }} | <strong>Estado:</strong> {{ manga.get_estado_display }} | <strong>⭐</strong> {{ manga.calificacion }}</p>
+            <h1 class="text-primary fw-bold mb-3">{{ manga.titulo }}</h1>
             
-            <div>
+            <div class="mb-3 text-light">
+                <p class="mb-1"><strong>Autor:</strong> {{ manga.autor }}</p>
+                <p class="mb-1"><strong>Estado:</strong> {{ manga.get_estado_display }}</p>
+                <p class="mb-1">
+                    <strong>Calificación:</strong> 
+                    <span class="text-warning fw-bold">⭐ {{ manga.calificacion }} / 5.00</span>
+                </p>
+            </div>
+
+            <div class="mb-4">
                 {% for genero in manga.generos.all %}
-                    <span class="etiqueta-genero">{{ genero.nombre }}</span>
+                    <span class="badge bg-secondary fs-6 me-1">{{ genero.nombre }}</span>
                 {% empty %}
-                    <span class="etiqueta-genero">Sin género</span>
+                    <span class="badge bg-dark border border-secondary text-muted">Sin género</span>
                 {% endfor %}
             </div>
 
-            <div class="sinopsis">
-                {{ manga.sinopsis|linebreaks }}
+            <div class="card bg-dark border-secondary shadow-sm mb-4">
+                <div class="card-body text-light" style="line-height: 1.7; text-align: justify;">
+                    {{ manga.sinopsis|linebreaks }}
+                </div>
             </div>
 
-            <div class="lista-capitulos">
-                <h3>Capítulos Disponibles</h3>
-                <div class="lista-capitulos">
-                <h3>Capítulos Disponibles</h3>
-                
-                {% if progreso %}
-                    <div style="background-color: #e8f0fe; padding: 15px; border-radius: 8px; margin-bottom: 20px; border-left: 4px solid #0366d6;">
-                        <p style="margin: 0; color: #0366d6; font-weight: bold;">
-                            Continuar leyendo: 
-                            <a href="{% url 'leer_capitulo' progreso.capitulo.id %}" style="color: #0366d6; text-decoration: underline;">
-                                Cap. {{ progreso.capitulo.numero }}
-                            </a>
-                        </p>
-                    </div>
-                {% endif %}
+            {% if progreso %}
+                <div class="alert alert-info border-info bg-dark text-info d-flex flex-wrap justify-content-between align-items-center shadow-sm">
+                    <span class="fw-bold mb-2 mb-md-0">Tu progreso guardado:</span>
+                    <a href="{% url 'leer_capitulo' progreso.capitulo.id %}" class="btn btn-info btn-sm fw-bold">
+                        ▶ Continuar Cap. {{ progreso.capitulo.numero }}
+                    </a>
+                </div>
+            {% endif %}
+
+            <h3 class="border-bottom border-secondary pb-2 mb-3 mt-4 text-light">Capítulos Disponibles</h3>
+            
+            <div class="list-group shadow-sm mb-5">
                 {% for capitulo in capitulos %}
-                    <a href="{% url 'leer_capitulo' capitulo.id %}" class="capitulo-link">
-                        {% if capitulo.tomo %}Tomo {{ capitulo.tomo }} - {% endif %}
-                        Capítulo {{ capitulo.numero }}
-                        {% if capitulo.titulo %}: {{ capitulo.titulo }}{% endif %}
-                        <span style="float: right; color: #6a737d; font-size: 0.85rem;">
-                            Subido el {{ capitulo.fecha_subida|date:"d M Y" }}
-                        </span>
+                    <a href="{% url 'leer_capitulo' capitulo.id %}" class="list-group-item list-group-item-action bg-dark text-light border-secondary d-flex justify-content-between align-items-center">
+                        <div>
+                            {% if capitulo.tomo %}
+                                <span class="badge bg-primary me-2">Tomo {{ capitulo.tomo }}</span>
+                            {% endif %}
+                            <strong class="text-primary">Capítulo {{ capitulo.numero }}</strong>
+                            {% if capitulo.titulo %}
+                                <span class="text-light ms-1">- {{ capitulo.titulo }}</span>
+                            {% endif %}
+                        </div>
+                        <small class="text-secondary d-none d-sm-block">{{ capitulo.fecha_subida|date:"d M Y" }}</small>
                     </a>
                 {% empty %}
-                    <p>Aún no hay capítulos disponibles para este manga.</p>
+                    <div class="list-group-item bg-dark text-muted border-secondary text-center">
+                        Aún no hay capítulos disponibles para este manga.
+                    </div>
                 {% endfor %}
             </div>
 
-        </section>
-    </main>
+        </div>
+    </div>
 
-</body>
-</html>
+{% endblock %}
