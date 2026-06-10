@@ -11,6 +11,7 @@ urlpatterns = [
     path('manga/<int:manga_id>/', biblioteca_views.detalle_manga, name='detalle_manga'),
     path('leer/<int:capitulo_id>/', biblioteca_views.leer_capitulo, name='leer_capitulo'),
     path('guardar-progreso/', biblioteca_views.guardar_progreso_ajax, name='guardar_progreso'),
+    path('subir-capitulo/', biblioteca_views.subir_capitulo, name='subir_capitulo'),
 ]
 
 if settings.DEBUG:

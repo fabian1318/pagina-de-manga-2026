@@ -19,7 +19,7 @@
 
 {% block content %}
 
-    <div class="d-flex flex-column flex-md-row justify-content-between align-items-center bg-dark border border-secondary p-3 rounded mb-4 shadow-sm">
+<div class="sticky-top d-flex flex-column flex-md-row justify-content-between align-items-center bg-dark border-bottom border-secondary p-3 shadow-sm" style="z-index: 1050; top: 0;">
         
         <a href="{% url 'detalle_manga' capitulo.manga.id %}" class="btn btn-outline-secondary btn-sm mb-2 mb-md-0">
             &larr; Volver a Detalles
@@ -31,8 +31,8 @@
             {% if capitulo.tomo %}Tomo {{ capitulo.tomo }} - {% endif %}Capítulo {{ capitulo.numero }}
         </h4>
 
-        <a href="#top" class="btn btn-outline-primary btn-sm mt-2 mt-md-0" onclick="window.scrollTo(0,0);">
-            Subir &uarr;
+        <a href="{% url 'inicio' %}" class="btn btn-outline-primary btn-sm mt-2 mt-md-0">
+            🏠 Inicio
         </a>
         
     </div>
@@ -61,15 +61,17 @@
 {% block extra_js %}
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-        // Disfrazamos la variable para que VS Code no marque error
-        const paginaGuardada = parseInt("{{ pagina_guardada|default:'1' }}", 10);
+const paginaGuardada = parseInt("{{ pagina_guardada|default:'1' }}", 10);
         
-        // AUTO-SCROLL
+        // AUTO-SCROLL MEJORADO (Con pequeño retraso)
         if (paginaGuardada > 1) {
-            const imagenObjetivo = document.getElementById(`pagina-${paginaGuardada}`);
-            if (imagenObjetivo) {
-                imagenObjetivo.scrollIntoView({ behavior: 'smooth' });
-            }
+            setTimeout(() => {
+                const imagenObjetivo = document.getElementById(`pagina-${paginaGuardada}`);
+                if (imagenObjetivo) {
+                    // Usamos behavior: 'auto' para un salto instantáneo y block: 'start' para alinear arriba
+                    imagenObjetivo.scrollIntoView({ behavior: 'auto', block: 'start' });
+                }
+            }, 600); // Esperamos 600 milisegundos a que el DOM se organice
         }
 
         // DETECTOR DE PROGRESO
@@ -83,22 +85,33 @@
             threshold: 0.5 
         };
 
+        // --- LA MAGIA DEL DEBOUNCE ---
+        let temporizadorGuardado; // Creamos la variable del reloj
+
         const observador = new IntersectionObserver((entradas) => {
             entradas.forEach(entrada => {
                 if (entrada.isIntersecting) {
                     const numPagina = entrada.target.getAttribute('data-numero');
                     
-                    fetch(urlGuardar, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRFToken': csrfToken
-                        },
-                        body: JSON.stringify({
-                            'capitulo_id': capituloId,
-                            'pagina': numPagina
-                        })
-                    });
+                    // 1. Si pasas por una imagen rápido, cancelamos el guardado anterior
+                    clearTimeout(temporizadorGuardado);
+                    
+                    // 2. Programamos un nuevo guardado para dentro de 1 segundo (1000 ms)
+                    temporizadorGuardado = setTimeout(() => {
+                        fetch(urlGuardar, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': csrfToken
+                            },
+                            body: JSON.stringify({
+                                'capitulo_id': capituloId,
+                                'pagina': numPagina
+                            })
+                        }).then(response => {
+                            console.log("Progreso guardado: Página " + numPagina);
+                        });
+                    }, 1000); // <-- Puedes ajustar este tiempo (1000 = 1 segundo)
                 }
             });
         }, opciones);

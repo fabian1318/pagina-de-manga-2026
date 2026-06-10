@@ -1,7 +1,12 @@
+import zipfile
+import re
+from django.core.files.base import ContentFile
+from django.shortcuts import redirect
+from .forms import SubirCapituloForm
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
-from .models import Manga, Capitulo, Genero, HistorialLectura
+from .models import Manga, Capitulo, Genero, HistorialLectura, Pagina
 from django.http import JsonResponse
 import json
 
@@ -99,3 +104,63 @@ def guardar_progreso_ajax(request):
         )
         return JsonResponse({'status': 'guardado'})
     return JsonResponse({'error': 'metodo no permitido'}, status=400)
+
+@login_required
+def subir_capitulo(request):
+    # Solo tú (o los que sean "Staff") deberían poder subir capítulos
+    if not request.user.is_staff:
+        return render(request, 'biblioteca/error.html', {'mensaje': 'No tienes permisos para subir mangas.'})
+
+    if request.method == 'POST':
+        # request.FILES es vital para recibir archivos adjuntos
+        form = SubirCapituloForm(request.POST, request.FILES)
+        
+        if form.is_valid():
+            manga = form.cleaned_data['manga']
+            tomo = form.cleaned_data['tomo']
+            numero = form.cleaned_data['numero']
+            titulo = form.cleaned_data['titulo']
+            archivo_zip = request.FILES['archivo']
+
+            # 1. Creamos el registro del Capítulo en la Base de Datos
+            capitulo = Capitulo.objects.create(
+                manga=manga, tomo=tomo, numero=numero, titulo=titulo
+            )
+
+            # 2. Abrimos el archivo .zip / .cbz en memoria
+            with zipfile.ZipFile(archivo_zip, 'r') as z:
+                nombres_archivos = z.namelist()
+                
+                # Filtramos para ignorar archivos basura
+                imagenes = [n for n in nombres_archivos if n.lower().endswith(('.png', '.jpg', '.jpeg', '.webp'))]
+                
+                # --- LA MAGIA DEL ORDENAMIENTO ESTILO WINDOWS ---
+                def clave_orden(nombre):
+                    # 1. Si empieza con un símbolo (como '_'), le damos prioridad (0) sobre los números/letras (1)
+                    prioridad = 0 if not nombre[0].isalnum() else 1
+                    
+                    # 2. Ordenamiento Natural: separa letras de números para que el 2 vaya antes que el 10
+                    partes = [int(c) if c.isdigit() else c.lower() for c in re.split(r'(\d+)', nombre)]
+                    
+                    return (prioridad, partes)
+
+                # Aplicamos nuestra regla especial para ordenar
+                imagenes.sort(key=clave_orden)
+                # 3. El bucle mágico que extrae y crea las páginas
+                for index, nombre_img in enumerate(imagenes, start=1):
+                    # Leemos los datos binarios de la imagen
+                    datos_imagen = z.read(nombre_img)
+                    
+                    # Creamos la instancia de la página
+                    nueva_pagina = Pagina(capitulo=capitulo, numero=index)
+                    
+                    # Le damos un nombre limpio y guardamos el archivo físico
+                    nombre_limpio = f"m__{manga.id}_c_{numero}_p_{index}.jpg"
+                    nueva_pagina.imagen.save(nombre_limpio, ContentFile(datos_imagen), save=True)
+
+            # Cuando termine, te redirige a ver el manga que acabas de actualizar
+            return redirect('detalle_manga', manga_id=manga.id)
+    else:
+        form = SubirCapituloForm()
+
+    return render(request, 'biblioteca/subir.html', {'form': form})
